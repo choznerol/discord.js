@@ -17,19 +17,12 @@ class TypingStartHandler extends AbstractHandler {
       if (channel._typing.has(user.id)) {
         const typing = channel._typing.get(user.id);
         typing.lastTimestamp = timestamp;
-        typing.resetTimeout(this.tooLate(channel, user));
+        typing.resetTimeout(tooLate(channel, user));
       } else {
-        channel._typing.set(user.id, new TypingData(client, timestamp, timestamp, this.tooLate(channel, user)));
+        channel._typing.set(user.id, new TypingData(client, timestamp, timestamp, tooLate(channel, user)));
         client.emit(Constants.Events.TYPING_START, channel, user);
       }
     }
-  }
-
-  tooLate(channel, user) {
-    return channel.client.setTimeout(() => {
-      channel.client.emit(Constants.Events.TYPING_STOP, channel, user, channel._typing.get(user.id));
-      channel._typing.delete(user.id);
-    }, 6000);
   }
 }
 
@@ -51,6 +44,12 @@ class TypingData {
   }
 }
 
+function tooLate(channel, user) {
+  return channel.client.setTimeout(() => {
+    channel.client.emit(Constants.Events.TYPING_STOP, channel, user, channel._typing.get(user.id));
+    channel._typing.delete(user.id);
+  }, 6000);
+}
 
 /**
  * Emitted whenever a user starts typing in a channel
